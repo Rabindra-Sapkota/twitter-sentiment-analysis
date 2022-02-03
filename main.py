@@ -38,7 +38,7 @@ def test_model():
     """
     Run prediction with pre-trained model
     """
-    test_model_on_live_data.test_model(constants.MODEL_TO_TRAIN)
+    test_model_on_live_data.predict_data(constants.MODEL_TO_TRAIN)
 
 
 if __name__ == '__main__':
