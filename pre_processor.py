@@ -1,62 +1,46 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+from nltk.corpus import stopwords
+from nltk.tokenize import RegexpTokenizer
+from nltk import PorterStemmer, WordNetLemmatizer
+import re
+from data_inspector import pd
 
 
-def load_dataset(file_name, header=None, encoding='ISO-8859-1'):
+def pre_process_data(df):
     """
-    Loads file with pre-defined Headers and Encoding
+    Pre-process data. Does encoding, case-equalization
+    Args:
+        df (dataframe): DataFame which is to be pre-processed
+    Returns:
+        dataframe: pre-processed data frame
+    """
+    pd.set_option('mode.chained_assignment', None)
+    # Take only samples
+    # df = df.sample(10000)
+
+    # Encode Sentiment value as 1 and 0
+    df['Sentiment'] = df.Sentiment.replace(4, 1)
+
+    # Stem, lemmatize, tokenize data with cleansing. case conversion done implicitly
+    df['Text'] = df.Text.apply(lambda text: stem_lemmatize_tokenize_with_cleaning(text))
+    return df
+
+
+def stem_lemmatize_tokenize_with_cleaning(string_with_stop_word):
+    """
+    Remove Stop words, URL and punctuation from the string. Returns Tokenized data
 
     Args:
-        file_name (str): Name of the file that is to be loaded
-        header (list): Header of the dataframe
-        encoding (str): Encoding of data
+         string_with_stop_word(str): String with stop word characters
 
     Returns:
-        dataframe: Dataframe from the given file name.
+        set: Set with string element after removal of stop words
     """
-    try:
-        data_frame = pd.read_csv(file_name, names=header, encoding=encoding)
-        return data_frame
-    except FileNotFoundError:
-        exception_message = f'File {file_name} is not found.'
-        print(exception_message)
-        raise Exception(exception_message)
-    except Exception as e:
-        print(e)
-        raise Exception('Unable to read data')
+    st = PorterStemmer()
+    lm = WordNetLemmatizer()
+    eng_stop_word = stopwords.words('english')
+    tokenizer = RegexpTokenizer(r'[A-Za-z]+')
 
-
-def eda_of_dataframe(df):
-    """
-    Takes dataframe and describes its attributes
-
-    Args:
-         df (dataframe): Dataframe whose attribute has to be described
-
-    Returns:
-        None
-    """
-    # pd.set_option('display.max_rows', None, 'display.max_columns', None)
-    print('-'*50, 'Top five sample data', '-'*50)
-    print(df.head())
-    print('-'*50, 'Number of Unique values for data', '-'*50)
-    print(df.nunique())
-    print('-'*50, 'Data Size', '-'*50)
-    data_size = df.shape
-    print(f'Rows: {data_size[0]}, Columns: {data_size[1]}')
-    print('-'*50, 'Null Values Count', '-'*50)
-    print(df.isna().sum())
-    print('-'*120)
-
-
-def visualize_target_distribution(df_series):
-    """
-    Visualize portion of data for negative and positive tweets for given series
-    Args:
-        df_series(data_series): Data Series whose distribution is to be visualized
-    """
-    data_distribution = df_series.groupby(df_series).count()
-    ax = data_distribution.plot(kind='bar', title='Distribution of Sentiment in data')
-    ax.set_xticklabels(['Negative', 'Positive'], rotation=0)
-    plt.show()
-
+    string_after_url_remover = re.sub(r'(www.[\S]*)|(https?://[\S]*)', ' ', string_with_stop_word)
+    string_list = tokenizer.tokenize(string_after_url_remover)
+    cleaned_list = [lm.lemmatize(st.stem(string)) for string in string_list if string not in eng_stop_word]
+    return ' '.join(cleaned_list)
