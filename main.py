@@ -1,4 +1,5 @@
 import pickle
+import pandas as pd
 import constants
 import data_inspector
 import pre_processor
@@ -38,10 +39,12 @@ def test_model():
     """
     Run prediction with pre-trained model
     """
-    test_model_on_live_data.predict_data(constants.MODEL_TO_TRAIN)
+    test_model_on_live_data.predict_data(constants.MODEL_TO_PREDICT, constants.TWEET_TEXT_QUERY,
+                                         constants.TWEET_EXTRACTION_COUNT, to_csv=True)
 
 
 if __name__ == '__main__':
+    pd.set_option('display.max_rows', None, 'display.max_columns', None)
     print(f'Running Program in {constants.RUN_METHOD} mode')
     if constants.RUN_METHOD == 'Train':
         train_data_model()
